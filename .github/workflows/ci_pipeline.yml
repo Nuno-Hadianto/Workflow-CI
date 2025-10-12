@@ -37,8 +37,7 @@ jobs:
       - name: Run MLflow Project (Model Retraining)
         run: |
           cd MLProject
-          # Perintah ini menggunakan Python saat ini (--no-conda)
-          mlflow run . --no-conda
+          mlflow run . --env=local
           
       # 3. Login ke Docker Hub
       - name: Login to Docker Hub
