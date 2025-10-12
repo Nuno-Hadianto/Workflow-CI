@@ -33,14 +33,15 @@ jobs:
           python-version: '3.12'
           
       - name: Install Dependencies
-        # Instal semua dependensi yang diperlukan di environment GitHub Actions
+        # Instal semua dependensi yang diperlukan
         run: |
+          # Pastikan semua dependensi yang digunakan di modelling.py terinstal
           pip install mlflow==2.19.0 pandas scikit-learn dagshub joblib
           
       # 2. Run MLflow Project (Model Retraining)
       - name: Run MLflow Project (Model Retraining)
+        # Perintah ini menjalankan python modelling.py
         run: |
-          # Perintah ini menjalankan 'python modelling.py' tanpa masalah Conda
           mlflow run ./MLProject
           
       # 3. Login ke Docker Hub
@@ -50,16 +51,15 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # 4. Ambil Run ID Terbaik dari DagsHub (SOLUSI FINAL ERROR 'search')
+      # 4. Ambil Run ID Terbaik dari DagsHub (Solusi Error 'search')
       - name: Get Latest Successful Run ID
         id: get_run_id
         run: |
-          # Menggunakan perintah 'mlflow run list' yang lebih stabil
-          # --experiment-id 0 adalah Default
+          # Menggunakan perintah 'mlflow run list' yang stabil untuk mendapatkan Run ID terbaru
           RUN_ID=$(mlflow run list --experiment-id 0 --max-results 1 --output-columns run_id | awk 'NR>1 {print $1}')
           
           if [ -z "$RUN_ID" ]; then
-            echo "::error::Tidak ada run yang ditemukan di DagsHub."
+            echo "::error::Tidak ada run yang ditemukan di DagsHub. Pastikan Kriteria 2 berhasil."
             exit 1
           fi
           echo "LATEST_RUN_ID=$RUN_ID" >> $GITHUB_ENV
@@ -69,7 +69,7 @@ jobs:
         run: |
           IMAGE_NAME=${{ secrets.DOCKERHUB_USERNAME }}/salaries-model-ci:latest
           
-          # URI menunjuk ke file model yang di-log
+          # MODEL_URI menunjuk ke file model yang di-log
           MODEL_URI=runs:/${{ env.LATEST_RUN_ID }}/ridge_model/best_ridge_model.pkl 
 
           echo "Membangun Docker Image dari $MODEL_URI"
