@@ -3,6 +3,5 @@ name: Software-Salaries-Model-CI
 conda_env: conda.yaml
 
 entry_points:
-  # Nama entry point yang akan dipanggil oleh 'mlflow run .'
   main:
     command: "python modelling.py"
