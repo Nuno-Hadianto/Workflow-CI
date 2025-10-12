@@ -12,14 +12,12 @@ from sklearn.metrics import mean_squared_error, r2_score
 # --- MLflow Setup ---
 import mlflow 
 
-# Abaikan warning deprecation dari scikit-learn
 warnings.filterwarnings("ignore", category=FutureWarning)
 
 # Catatan: dagshub.init() DIHAPUS. Autentikasi dilakukan oleh GitHub Secrets.
 
 def load_data(path: str):
     """Memuat data pelatihan dan pengujian yang sudah diproses."""
-    # Path relatif terhadap folder MLProject
     train_df = pd.read_csv(f'{path}/train_processed.csv')
     test_df = pd.read_csv(f'{path}/test_processed.csv')
     
@@ -50,7 +48,6 @@ def train_and_log_model(X_train, X_test, y_train, y_test):
     
     start_time = time.time()
     
-    # 2. Start MLflow Run 
     with mlflow.start_run(run_name="Ridge_Tuning_CI"):
         print("Memulai pelatihan dan tuning...")
         grid_search.fit(X_train, y_train)
