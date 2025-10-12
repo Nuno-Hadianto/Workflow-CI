@@ -37,7 +37,7 @@ jobs:
       - name: Run MLflow Project (Model Retraining)
         run: |
           cd MLProject
-          mlflow run . --env=local
+          mlflow run .
           
       # 3. Login ke Docker Hub
       - name: Login to Docker Hub
