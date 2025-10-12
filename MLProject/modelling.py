@@ -16,10 +16,22 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 
 # Catatan: dagshub.init() DIHAPUS. Autentikasi dilakukan oleh GitHub Secrets.
 
-def load_data(path: str):
+def load_data(): # Hapus parameter 'path' karena kita menggunakan path absolut
     """Memuat data pelatihan dan pengujian yang sudah diproses."""
-    train_df = pd.read_csv(f'{path}/train_processed.csv')
-    test_df = pd.read_csv(f'{path}/test_processed.csv')
+    
+    # PERBAIKAN PATH DATA: Menggunakan path absolut dari root repository
+    # Format: [Nama Folder MLProject]/[Nama Folder Preprocessing]/[Nama File]
+    TRAIN_PATH = 'MLProject/namadataset_preprocessing/train_processed.csv'
+    TEST_PATH = 'MLProject/namadataset_preprocessing/test_processed.csv'
+    
+    # Cek apakah file ada (untuk debug)
+    if not os.path.exists(TRAIN_PATH) or not os.path.exists(TEST_PATH):
+        raise FileNotFoundError(
+            f"File data tidak ditemukan! Periksa struktur folder CI Anda. Harusnya ada di: {TRAIN_PATH}"
+        )
+
+    train_df = pd.read_csv(TRAIN_PATH)
+    test_df = pd.read_csv(TEST_PATH)
     
     X_train = train_df.drop('Salary', axis=1)
     y_train = train_df['Salary']
@@ -32,6 +44,7 @@ def load_data(path: str):
 def train_and_log_model(X_train, X_test, y_train, y_test):
     """Melatih, tuning, dan mencatat model ke MLflow."""
     
+    # ... (Sisa kode fungsi training Anda, TANPA PERUBAHAN)
     model = Ridge(random_state=42)
     param_grid = {
         'alpha': [0.1, 1.0, 10.0, 50.0], 
@@ -86,6 +99,6 @@ def train_and_log_model(X_train, X_test, y_train, y_test):
 
         
 if __name__ == '__main__':
-    PREPROCESSED_DATA_PATH = 'namadataset_preprocessing' 
-    X_train, X_test, y_train, y_test = load_data(PREPROCESSED_DATA_PATH)
+    # Tidak perlu passing path lagi
+    X_train, X_test, y_train, y_test = load_data() 
     train_and_log_model(X_train, X_test, y_train, y_test)
