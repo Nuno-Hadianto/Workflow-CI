@@ -18,7 +18,7 @@ jobs:
       MLFLOW_TRACKING_USERNAME: ${{ secrets.DAGSHUB_USERNAME }}
       MLFLOW_TRACKING_PASSWORD: ${{ secrets.DAGSHUB_TOKEN }} 
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }} # Tambahkan ini agar login docker berhasil
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }} 
       
     steps:
       - name: Checkout Repository
@@ -30,22 +30,22 @@ jobs:
           python-version: '3.12'
           
       - name: Install Dependencies
-        # Instal semua dependensi yang diperlukan untuk menjalankan modelling.py
+        # Instal semua dependensi yang diperlukan
         run: |
           pip install mlflow==2.19.0 pandas scikit-learn dagshub joblib
           
-      # 2. Run MLflow Project (Retraining) - Solusi Error 'activate'
-      - name: Run MLflow Project (Model Retraining)
+      # 2. Run Model Retraining (SOLUSI BUG MLFLOW)
+      - name: Run Model Retraining and Logging
         run: |
-          # Perintah ini menjalankan 'python modelling.py' tanpa mengaktifkan Conda
-          mlflow run ./MLProject
+          # JANGAN gunakan 'mlflow run .'
+          # Panggil python secara langsung, yang akan membuat RUN di DagsHub.
+          python MLProject/modelling.py
           
       # 3. Login ke Docker Hub
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
-          # Kredensial diambil dari env DOCKERHUB_TOKEN
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       # 4. Ambil Run ID Terbaik dari DagsHub
