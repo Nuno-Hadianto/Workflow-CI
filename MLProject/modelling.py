@@ -12,11 +12,10 @@ from sklearn.metrics import mean_squared_error, r2_score
 # --- MLflow Setup ---
 import mlflow 
 
-# Abaikan warning
+# Abaikan warning deprecation dari scikit-learn
 warnings.filterwarnings("ignore", category=FutureWarning)
 
-# PERHATIAN: dagshub.init() DIHAPUS. 
-# Autentikasi dilakukan oleh Environment Variables GitHub Secrets.
+# Catatan: dagshub.init() DIHAPUS. Autentikasi dilakukan oleh GitHub Secrets.
 
 def load_data(path: str):
     """Memuat data pelatihan dan pengujian yang sudah diproses."""
@@ -51,6 +50,7 @@ def train_and_log_model(X_train, X_test, y_train, y_test):
     
     start_time = time.time()
     
+    # 2. Start MLflow Run 
     with mlflow.start_run(run_name="Ridge_Tuning_CI"):
         print("Memulai pelatihan dan tuning...")
         grid_search.fit(X_train, y_train)
@@ -60,11 +60,10 @@ def train_and_log_model(X_train, X_test, y_train, y_test):
         best_model = grid_search.best_estimator_
         y_pred = best_model.predict(X_test)
         
-        # Hitung Metrik Evaluasi
+        # Log Metrik (Kriteria 2: Advance)
         rmse = mean_squared_error(y_test, y_pred, squared=False)
         r2 = r2_score(y_test, y_pred)
         
-        # Log Metrik
         mlflow.log_params(grid_search.best_params_)
         mlflow.log_metric("rmse", rmse)
         mlflow.log_metric("r2_score", r2)
@@ -79,10 +78,8 @@ def train_and_log_model(X_train, X_test, y_train, y_test):
 
         joblib.dump(best_model, os.path.join(TEMP_DIR, MODEL_FILE_NAME))
         
-        # Log model sebagai artefak (yang akan digunakan oleh mlflow build-docker)
         mlflow.log_artifact(TEMP_DIR, artifact_path="ridge_model") 
         
-        # Hapus folder sementara
         try:
             os.rmdir(TEMP_DIR)
         except OSError:
