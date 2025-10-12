@@ -5,8 +5,8 @@ on:
     branches:
       - main  
     paths:
-      - 'MLProject/**' 
-  workflow_dispatch: 
+      - 'MLProject/**' # Trigger jika ada perubahan pada kode/data model
+  workflow_dispatch: # Memungkinkan eksekusi manual
 
 jobs:
   mlflow_retrain_and_dockerize:
@@ -34,12 +34,12 @@ jobs:
         run: |
           pip install mlflow==2.19.0 pandas scikit-learn dagshub joblib
           
-      # 2. Run Model Retraining (SOLUSI BUG MLFLOW)
-      - name: Run Model Retraining and Logging
+      # 2. Run MLflow Project (Model Retraining)
+      - name: Run MLflow Project (Model Retraining)
         run: |
-          # JANGAN gunakan 'mlflow run .'
-          # Panggil python secara langsung, yang akan membuat RUN di DagsHub.
-          python MLProject/modelling.py
+          cd MLProject
+          # Perintah ini menjalankan python modelling.py
+          mlflow run .
           
       # 3. Login ke Docker Hub
       - name: Login to Docker Hub
@@ -48,14 +48,15 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # 4. Ambil Run ID Terbaik dari DagsHub
+      # 4. Ambil Run ID Terbaik dari DagsHub (SOLUSI FINAL ERROR 'search')
       - name: Get Latest Successful Run ID
         id: get_run_id
         run: |
-          RUN_ID=$(mlflow search runs --experiment-names "Default" --order-by "metrics.r2_score DESC" --max-results 1 --output-columns "run_id" | awk 'NR>1 {print $1}')
+          # Menggunakan perintah 'mlflow run list' yang lebih stabil
+          RUN_ID=$(mlflow run list --experiment-id 0 --max-results 1 --output-columns run_id | awk 'NR>1 {print $1}')
           
           if [ -z "$RUN_ID" ]; then
-            echo "::error::Tidak ada run yang ditemukan di DagsHub. Pastikan Kriteria 2 berhasil."
+            echo "::error::Tidak ada run yang ditemukan di DagsHub."
             exit 1
           fi
           echo "LATEST_RUN_ID=$RUN_ID" >> $GITHUB_ENV
@@ -65,7 +66,7 @@ jobs:
         run: |
           IMAGE_NAME=${{ secrets.DOCKERHUB_USERNAME }}/salaries-model-ci:latest
           
-          # MODEL_URI menunjuk ke file model yang di-log
+          # URI menunjuk ke file model yang di-log
           MODEL_URI=runs:/${{ env.LATEST_RUN_ID }}/ridge_model/best_ridge_model.pkl 
 
           echo "Membangun Docker Image dari $MODEL_URI"
