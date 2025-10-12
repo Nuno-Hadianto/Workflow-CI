@@ -40,7 +40,6 @@ jobs:
       - name: Run MLflow Project (Model Retraining)
         run: |
           cd MLProject
-          # Perintah ini menjalankan 'python modelling.py' tanpa mengandalkan Conda
           mlflow run .
           
       # 3. Login ke Docker Hub (Kriteria 3: Advance)
