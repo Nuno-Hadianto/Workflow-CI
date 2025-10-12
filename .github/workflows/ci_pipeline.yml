@@ -6,7 +6,7 @@ on:
       - main  # Trigger setiap push ke branch utama
     paths:
       - 'MLProject/**' # Trigger jika ada perubahan pada kode/data model
-  workflow_dispatch: # Memungkinkan eksekusi manual
+  workflow_dispatch: # biar bisa eksekusi manual
 
 jobs:
   mlflow_retrain_and_dockerize:
