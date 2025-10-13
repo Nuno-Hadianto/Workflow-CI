@@ -54,8 +54,6 @@ jobs:
       - name: Get Latest Successful Run ID
         id: get_run_id
         run: |
-          # Perintah ini menggunakan 'mlflow run list' yang paling dasar dan stabil.
-          # Jika gagal, ini adalah karena Bug MLflow CLI, tetapi ini adalah format terbaik.
           RUN_ID=$(mlflow run list --experiment-id 0 | awk 'NR==2 {print $1}')
           
           if [ -z "$RUN_ID" ]; then
