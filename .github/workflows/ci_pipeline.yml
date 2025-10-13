@@ -5,7 +5,7 @@ on:
     branches:
       - main  # Trigger ketika ada push ke branch utama
     paths:
-      - 'MLProject/**' # Hanya trigger jika ada perubahan pada file model/data
+      - 'MLProject/**' # Hanya trigger jika ada perubahan pada file model/kode
   workflow_dispatch: # Memungkinkan eksekusi manual dari GitHub UI
 
 jobs:
@@ -35,13 +35,12 @@ jobs:
       - name: Install Dependencies
         # Instal semua dependensi yang diperlukan
         run: |
-          # Pastikan semua dependensi yang digunakan di modelling.py terinstal
           pip install mlflow==2.19.0 pandas scikit-learn dagshub joblib
           
       # 2. Run Model Retraining (Panggilan Python Langsung)
       - name: Run Model Retraining and Logging
         run: |
-          # Panggil python modelling.py secara langsung
+          # Panggil python modelling.py secara langsung (Mengatasi Error 'mlflow run')
           python MLProject/modelling.py
           
       # 3. Login ke Docker Hub
@@ -51,12 +50,12 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # 4. Ambil Run ID Terbaik dari DagsHub (Solusi Error CLI)
+      # 4. Ambil Run ID Terbaik dari DagsHub (SOLUSI FINAL ERROR CLI)
       - name: Get Latest Successful Run ID
         id: get_run_id
         run: |
-          # Menggunakan perintah 'mlflow run list' yang paling dasar dan stabil
-          # Mengambil baris kedua (NR==2) yang merupakan Run ID terbaru
+          # Menggunakan perintah 'mlflow run list' yang paling stabil
+          # AWK NR==2 mengambil Run ID dari baris kedua (terbaru)
           RUN_ID=$(mlflow run list --experiment-id 0 | awk 'NR==2 {print $1}')
           
           if [ -z "$RUN_ID" ]; then
@@ -71,6 +70,7 @@ jobs:
           IMAGE_NAME=${{ secrets.DOCKERHUB_USERNAME }}/salaries-model-ci:latest
           
           # MODEL_URI menunjuk ke file model yang di-log
+          # Pastikan penamaan artefak ini sesuai dengan yang Anda log di modelling.py
           MODEL_URI=runs:/${{ env.LATEST_RUN_ID }}/ridge_model/best_ridge_model.pkl 
 
           echo "Membangun Docker Image dari $MODEL_URI"
