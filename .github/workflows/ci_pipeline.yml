@@ -3,10 +3,10 @@ name: MLflow CI/CD Pipeline - Model Retraining & Dockerize
 on:
   push:
     branches:
-      - main  # Trigger ketika ada push ke branch utama
+      - main  
     paths:
-      - 'MLProject/**' # Hanya trigger jika ada perubahan pada file model/data
-  workflow_dispatch: # Memungkinkan eksekusi manual dari GitHub UI
+      - 'MLProject/**' # Trigger ketika ada perubahan pada file model/data
+  workflow_dispatch: 
 
 jobs:
   mlflow_retrain_and_dockerize:
@@ -35,14 +35,14 @@ jobs:
       - name: Install Dependencies
         # Instal semua dependensi yang diperlukan
         run: |
-          # Pastikan semua dependensi yang digunakan di modelling.py terinstal
           pip install mlflow==2.19.0 pandas scikit-learn dagshub joblib
           
-      # 2. Run MLflow Project (Model Retraining)
-      - name: Run MLflow Project (Model Retraining)
-        # Perintah ini menjalankan python modelling.py
+      # 2. Run Model Retraining (SOLUSI BUG MLFLOW FINAL)
+      - name: Run Model Retraining and Logging
         run: |
-          mlflow run ./MLProject
+          # Panggil python modelling.py secara langsung. 
+          # Ini akan membuat RUN di DagsHub.
+          python MLProject/modelling.py
           
       # 3. Login ke Docker Hub
       - name: Login to Docker Hub
@@ -51,11 +51,11 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # 4. Ambil Run ID Terbaik dari DagsHub (Solusi Error 'search')
+      # 4. Ambil Run ID Terbaik dari DagsHub (Menggunakan MLflow CLI yang stabil)
       - name: Get Latest Successful Run ID
         id: get_run_id
         run: |
-          # Menggunakan perintah 'mlflow run list' yang stabil untuk mendapatkan Run ID terbaru
+          # Menggunakan perintah 'mlflow run list' yang lebih stabil
           RUN_ID=$(mlflow run list --experiment-id 0 --max-results 1 --output-columns run_id | awk 'NR>1 {print $1}')
           
           if [ -z "$RUN_ID" ]; then
