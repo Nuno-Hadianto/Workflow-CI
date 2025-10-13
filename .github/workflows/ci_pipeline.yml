@@ -6,7 +6,7 @@ on:
       - main  
     paths:
       - 'MLProject/**' # Trigger ketika ada perubahan pada file model/data
-  workflow_dispatch: # Memungkinkan eksekusi manual dari GitHub UI
+  workflow_dispatch: 
 
 jobs:
   mlflow_retrain_and_dockerize:
@@ -37,10 +37,10 @@ jobs:
         run: |
           pip install mlflow==2.19.0 pandas scikit-learn dagshub joblib
           
-      # 2. Run Model Retraining (SOLUSI BUG MLFLOW FINAL)
+      # 2. Run Model Retraining (Menjalankan python modeling.py)
       - name: Run Model Retraining and Logging
         run: |
-          # Panggil python modelling.py secara langsung (Mengatasi Error 'mlflow run')
+          # Panggil python modelling.py secara langsung
           python MLProject/modelling.py
           
       # 3. Login ke Docker Hub
@@ -50,12 +50,13 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # 4. Ambil Run ID Terbaik dari DagsHub (SOLUSI ERROR: --max-results)
+      # 4. Ambil Run ID Terbaik dari DagsHub (SOLUSI FINAL: search runs)
       - name: Get Latest Successful Run ID
         id: get_run_id
         run: |
-          # Perintah ini menggunakan 'awk NR==2' yang paling stabil untuk mengambil RUN ID terbaru
-          RUN_ID=$(mlflow run list --experiment-id 0 | awk 'NR==2 {print $1}')
+          # Perintah search runs yang lebih andal untuk remote tracking server (DagsHub)
+          # Mencari run dengan R2 score tertinggi dan mengambil ID-nya.
+          RUN_ID=$(mlflow search runs --experiment-names "Default" --order-by "metrics.r2_score DESC" --max-results 1 --output-columns run_id | awk 'NR>1 {print $1}')
           
           if [ -z "$RUN_ID" ]; then
             echo "::error::Tidak ada run yang ditemukan di DagsHub. Pastikan Kriteria 2 berhasil."
