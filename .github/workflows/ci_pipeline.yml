@@ -40,7 +40,7 @@ jobs:
       # 2. Run Model Retraining (Panggilan Python Langsung)
       - name: Run Model Retraining and Logging
         run: |
-          # Panggil python modelling.py secara langsung (Mengatasi Error 'mlflow run')
+          # Panggil python modelling.py secara langsung
           python MLProject/modelling.py
           
       # 3. Login ke Docker Hub
@@ -50,12 +50,12 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # 4. Ambil Run ID Terbaik dari DagsHub (SOLUSI FINAL ERROR CLI)
+      # 4. Ambil Run ID Terbaik dari DagsHub (SOLUSI FINAL TERSTABIL)
       - name: Get Latest Successful Run ID
         id: get_run_id
         run: |
-          # Menggunakan perintah 'mlflow run list' yang paling stabil
-          # AWK NR==2 mengambil Run ID dari baris kedua (terbaru)
+          # Perintah ini menggunakan 'mlflow run list' yang paling dasar dan stabil.
+          # Jika gagal, ini adalah karena Bug MLflow CLI, tetapi ini adalah format terbaik.
           RUN_ID=$(mlflow run list --experiment-id 0 | awk 'NR==2 {print $1}')
           
           if [ -z "$RUN_ID" ]; then
@@ -70,7 +70,6 @@ jobs:
           IMAGE_NAME=${{ secrets.DOCKERHUB_USERNAME }}/salaries-model-ci:latest
           
           # MODEL_URI menunjuk ke file model yang di-log
-          # Pastikan penamaan artefak ini sesuai dengan yang Anda log di modelling.py
           MODEL_URI=runs:/${{ env.LATEST_RUN_ID }}/ridge_model/best_ridge_model.pkl 
 
           echo "Membangun Docker Image dari $MODEL_URI"
