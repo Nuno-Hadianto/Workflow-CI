@@ -5,7 +5,7 @@ on:
     branches:
       - main  
     paths:
-      - 'MLProject/**' # Trigger ketika ada perubahan pada file model/data
+      - 'MLProject/**' 
   workflow_dispatch: 
 
 jobs:
@@ -14,12 +14,9 @@ jobs:
     
     # 1. Menetapkan kredensial DagsHub dan Docker Hub dari Secrets
     env:
-      # Secrets DagsHub (Kriteria 2)
       MLFLOW_TRACKING_URI: ${{ secrets.DAGSHUB_MLFLOW_URI }} 
       MLFLOW_TRACKING_USERNAME: ${{ secrets.DAGSHUB_USERNAME }}
       MLFLOW_TRACKING_PASSWORD: ${{ secrets.DAGSHUB_TOKEN }} 
-      
-      # Secrets Docker Hub (Kriteria 3 Advance)
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }} 
       
@@ -40,8 +37,7 @@ jobs:
       # 2. Run Model Retraining (SOLUSI BUG MLFLOW FINAL)
       - name: Run Model Retraining and Logging
         run: |
-          # Panggil python modelling.py secara langsung. 
-          # Ini akan membuat RUN di DagsHub.
+          # Panggil python modelling.py secara langsung untuk menghindari bug MLflow run
           python MLProject/modelling.py
           
       # 3. Login ke Docker Hub
@@ -51,15 +47,16 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # 4. Ambil Run ID Terbaik dari DagsHub (Menggunakan MLflow CLI yang stabil)
+      # 4. Ambil Run ID Terbaik dari DagsHub (SOLUSI ERROR: --max-results)
       - name: Get Latest Successful Run ID
         id: get_run_id
         run: |
-          # Menggunakan perintah 'mlflow run list' yang lebih stabil
-          RUN_ID=$(mlflow run list --experiment-id 0 --max-results 1 --output-columns run_id | awk 'NR>1 {print $1}')
+          # Menggunakan perintah 'mlflow run list' yang paling stabil
+          # awk 'NR==2 {print $1}' mengambil Run ID di baris kedua (Run ID terbaru)
+          RUN_ID=$(mlflow run list --experiment-id 0 | awk 'NR==2 {print $1}')
           
           if [ -z "$RUN_ID" ]; then
-            echo "::error::Tidak ada run yang ditemukan di DagsHub. Pastikan Kriteria 2 berhasil."
+            echo "::error::Tidak ada run yang ditemukan di DagsHub."
             exit 1
           fi
           echo "LATEST_RUN_ID=$RUN_ID" >> $GITHUB_ENV
