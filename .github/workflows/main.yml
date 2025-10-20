@@ -1,1 +1,47 @@
-j
+name: MLflow CI Workflow (Retraining)
+
+# Trigger: Berjalan setiap kali push ke branch 'main'
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  train-model:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. Checkout kode repository
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      # 2. Setup environment Conda/Python
+      - name: Set up Python and Conda
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          
+      - name: Install Conda
+        run: |
+          wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+          bash miniconda.sh -b -p $HOME/miniconda
+          source $HOME/miniconda/bin/activate
+          conda init bash
+          
+      - name: Install MLflow
+        run: pip install mlflow
+
+      # 3. Menjalankan MLflow Project
+      # otomatis membaca 'MLProject', 
+      # membuat env Conda dari 'conda.yaml',
+      # menjalankan 'python modelling.py'
+      - name: Run MLflow Project
+        run: mlflow run .
+
+      # 4. Upload Artefak (Kriteria 'Skilled')
+      # menyimpan folder 'model' (yang berisi model.pkl)
+      # sebagai artefak di GitHub Actions
+      - name: Upload Model Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: trained-model-artifact
+          path: model/ # Path ke folder yang berisi model.pkl
