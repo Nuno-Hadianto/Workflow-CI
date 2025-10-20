@@ -13,7 +13,7 @@ jobs:
       run:
         shell: bash -l {0}
 
-    # Nama Image Docker Hub Anda
+    # Nama Image Docker Hub 
     env:
       IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/netflix-ci 
 
@@ -34,7 +34,7 @@ jobs:
         run: pip install mlflow
 
       # 4. Menjalankan MLflow Project (Training)
-      # Menggunakan GitHub Secrets sebagai Environment Variables
+      # GitHub Secrets sebagai Environment Variables
       - name: Run MLflow Project (Train Model)
         env:
           DAGSHUB_URI: ${{ secrets.DAGSHUB_URI }}
@@ -55,7 +55,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       # 7. Build Docker Image (Kriteria Advance)
-      # Ini menggunakan 'mlflow models build-docker'
+      # menggunakan 'mlflow models build-docker'
       - name: Build Docker Image with MLflow
         env:
           # MLflow perlu tahu di mana server tracking-nya
@@ -73,7 +73,7 @@ jobs:
       - name: Push Docker Image
         run: docker push ${{ env.IMAGE_NAME }}:latest
         
-      # 9. (Opsional) Simpan run_id sebagai artefakk
+      # 9. Simpan run_id sebagai artefakk
       - name: Upload Run ID Artifact
         uses: actions/upload-artifact@v4
         with:
