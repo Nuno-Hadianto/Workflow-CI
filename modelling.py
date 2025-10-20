@@ -77,7 +77,6 @@ pipeline = Pipeline([
 print("Memulai training model...")
 
 # 7. MLflow Tracking
-# Titik error kemungkinan ada di sini:
 with mlflow.start_run() as run:
     pipeline.fit(X_train, y_train)
     print("Training model selesai.")
