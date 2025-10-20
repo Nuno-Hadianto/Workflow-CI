@@ -18,17 +18,37 @@ DATA_PATH = os.path.join("namadataset_preprocessing", "netflix_preprocessed.csv"
 # Path untuk menyimpan run_id
 RUN_ID_FILE = "run_id.txt"
 
-# 1. Cek Kredensial (diambil dari GitHub Secrets)
-if "DAGSHUB_URI" not in os.environ:
-    print("Error: GitHub Secrets (DAGSHUB_URI, dll.) belum di-set.")
-    exit()
+# ----------------------------------------------------
+# --- DEBUGGING GITHUB SECRETS ---
+# ----------------------------------------------------
+print("--- DEBUGGING GITHUB SECRETS ---")
+uri = os.environ.get("DAGSHUB_URI")
+username = os.environ.get("DAGSHUB_USERNAME")
+token = os.environ.get("DAGSHUB_TOKEN")
+
+# Cek apakah secrets ada
+if not uri or not username or not token:
+    print("!!! ERROR: SATU ATAU LEBIH GITHUB SECRETS HILANG !!!")
+    print(f"DAGSHUB_URI: {'DITEMUKAN' if uri else 'HILANG (MISSING)'}")
+    print(f"DAGSHUB_USERNAME: {'DITEMUKAN' if username else 'HILANG (MISSING)'}")
+    print(f"DAGSHUB_TOKEN: {'DITEMUKAN' if token else 'HILANG (MISSING)'}")
+    print("Harap periksa 'Settings > Secrets' di repository GitHub Anda.")
+    print("Pastikan nama (case-sensitive) sudah benar.")
+    exit(1) # GAGALKAN SCRIPT DENGAN SENGAJA
+
+print("Semua secrets DITEMUKAN.")
+print(f"Akan terhubung ke URI: {uri}")
+print(f"Akan terhubung sebagai User: {username}")
+print("Token: [DITEMUKAN, TIDAK DITAMPILKAN]")
+print("-----------------------------------")
+# ----------------------------------------------------
 
 # 2. Set environment variables untuk MLflow
-os.environ["MLFLOW_TRACKING_URI"] = os.environ["DAGSHUB_URI"]
-os.environ["MLFLOW_TRACKING_USERNAME"] = os.environ["DAGSHUB_USERNAME"]
-os.environ["MLFLOW_TRACKING_PASSWORD"] = os.environ["DAGSHUB_TOKEN"]
+os.environ["MLFLOW_TRACKING_URI"] = uri
+os.environ["MLFLOW_TRACKING_USERNAME"] = username
+os.environ["MLFLOW_TRACKING_PASSWORD"] = token
 
-print(f"Logging akan dikirim ke: {os.environ['MLFLOW_TRACKING_URI']}")
+print(f"Logging akan dikirim ke: {uri}")
 print("Memulai script training CI...")
 
 # 3. Load Data
@@ -57,6 +77,7 @@ pipeline = Pipeline([
 print("Memulai training model...")
 
 # 7. MLflow Tracking
+# Titik error kemungkinan ada di sini:
 with mlflow.start_run() as run:
     pipeline.fit(X_train, y_train)
     print("Training model selesai.")
