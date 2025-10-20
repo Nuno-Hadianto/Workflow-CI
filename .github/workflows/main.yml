@@ -73,7 +73,7 @@ jobs:
       - name: Push Docker Image
         run: docker push ${{ env.IMAGE_NAME }}:latest
         
-      # 9. (Opsional) Simpan run_id sebagai artefak
+      # 9. (Opsional) Simpan run_id sebagai artefakk
       - name: Upload Run ID Artifact
         uses: actions/upload-artifact@v4
         with:
