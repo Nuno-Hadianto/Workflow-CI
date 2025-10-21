@@ -1,4 +1,4 @@
-name: MLflow CI Workflow (Train & Build Docker)
+name: MLflow CI Workflow 
 
 on:
   push:
@@ -13,7 +13,7 @@ jobs:
       run:
         shell: bash -l {0}
 
-    # Nama Image Docker Hub 
+    # Nama Image Docker Hub Anda (Masih pakai Secret)
     env:
       IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/netflix-ci 
 
@@ -34,46 +34,41 @@ jobs:
         run: pip install mlflow
 
       # 4. Menjalankan MLflow Project (Training)
-      # GitHub Secrets sebagai Environment Variables
-      - name: Run MLflow Project (Train Model)
-        env:
-          DAGSHUB_URI: ${{ secrets.DAGSHUB_URI }}
-          DAGSHUB_USERNAME: ${{ secrets.DAGSHUB_USERNAME }}
-          DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
-        run: mlflow run .
-
-      # 5. Baca Run ID yang disimpan
+      # MENGATUR ENV VARS LANGSUNG DI SINI (TIDAK AMAN!)
+      - name: Run MLflow Project (Train Model - Hardcoded)
+        run: |
+          export MLFLOW_TRACKING_URI="https://dagshub.com/nunohadianto/my-first-repo.mlflow"
+          export MLFLOW_TRACKING_USERNAME="nunohadianto"
+          export MLFLOW_TRACKING_PASSWORD="afe2c28404bd7ea3ee6c8c7db28c922656b49bef" 
+          
+          mlflow run .
+        
+      # 5. Baca Run ID 
       - name: Read Run ID
         id: read_run_id
         run: echo "RUN_ID=$(cat run_id.txt)" >> $GITHUB_OUTPUT
       
-      # 6. Login ke Docker Hub
+      # 6. Login ke Docker Hub 
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # 7. Build Docker Image (Kriteria Advance)
-      # menggunakan 'mlflow models build-docker'
+      # 7. Build Docker Image 
       - name: Build Docker Image with MLflow
-        env:
-          # MLflow perlu tahu di mana server tracking-nya
-          MLFLOW_TRACKING_URI: ${{ secrets.DAGSHUB_URI }}
         run: |
           RUN_ID=${{ steps.read_run_id.outputs.RUN_ID }}
           echo "Membangun image dari Run ID: $RUN_ID"
-          
-          # Perintah kriteria
           mlflow models build-docker \
             -m "runs:/${RUN_ID}/model" \
             -n "${{ env.IMAGE_NAME }}:latest"
 
-      # 8. Push Docker Image ke Docker Hub
+      # 8. Push Docker Image 
       - name: Push Docker Image
         run: docker push ${{ env.IMAGE_NAME }}:latest
         
-      # 9. Simpan run_id sebagai artefakk
+      # 9. Upload Run ID Artifact
       - name: Upload Run ID Artifact
         uses: actions/upload-artifact@v4
         with:
