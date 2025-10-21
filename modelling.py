@@ -1,5 +1,6 @@
 import pandas as pd
 import mlflow
+from mlflow.sklearn import save_model 
 from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
@@ -7,7 +8,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import LabelEncoder
 import warnings
 import os
-import pickle 
+import shutil # Untuk menghapus direktori
 
 # Matikan warnings
 warnings.filterwarnings("ignore")
@@ -16,6 +17,8 @@ warnings.filterwarnings("ignore")
 DATA_PATH = os.path.join("namadataset_preprocessing", "netflix_preprocessed.csv")
 # Path untuk menyimpan run_id
 RUN_ID_FILE = "run_id.txt"
+# Direktori lokal sementara untuk menyimpan model
+LOCAL_MODEL_DIR = "local_model_output" 
 
 print("Memulai script training CI (versi hardcoded workflow)...")
 
@@ -62,18 +65,23 @@ try:
         mlflow.log_metric("accuracy", accuracy)
         print(f"Akurasi: {accuracy}")
 
-        # --- LOG MODEL CARA MANUAL ---
-        print("Melakukan logging model ke DagsHub (Cara Manual)...")
-        model_filename = "model.pkl"
-        # Simpan model ke file .pkl
-        with open(model_filename, "wb") as f:
-            pickle.dump(pipeline, f)
-        # Log file .pkl sebagai artefak di folder 'model'
-        mlflow.log_artifact(model_filename, artifact_path="model")
-        print("Logging model berhasil.")
-        # Hapus file lokal
-        os.remove(model_filename)
+        # --- LOG MODEL (save_model + log_artifacts) ---
+        print(f"Menyimpan model ke direktori lokal: {LOCAL_MODEL_DIR}...")
+        # Hapus direktori lama jika ada
+        if os.path.exists(LOCAL_MODEL_DIR):
+            shutil.rmtree(LOCAL_MODEL_DIR)
+        # Simpan model dengan format MLflow (membuat MLmodel, conda.yaml, dll.)
+        save_model(pipeline, LOCAL_MODEL_DIR)
+        print("Model berhasil disimpan secara lokal.")
+
+        print(f"Mengunggah artefak dari {LOCAL_MODEL_DIR} ke DagsHub path 'model'...")
+        # Unggah seluruh isi direktori ke path 'model' di DagsHub
+        mlflow.log_artifacts(LOCAL_MODEL_DIR, artifact_path="model")
+        print("Artefak model berhasil diunggah.")
         
+        # Hapus direktori lokal setelah diunggah
+        shutil.rmtree(LOCAL_MODEL_DIR)
+        # --- SELESAI LOG MODEL BARU ---
 
         # 6. Simpan run_id ke file
         with open(RUN_ID_FILE, "w") as f:
@@ -82,6 +90,9 @@ try:
 except Exception as e:
     print(f"\n!!! TERJADI ERROR SAAT TRAINING/LOGGING !!!")
     print(f"Error: {e}")
+    # Bersihkan direktori lokal jika error terjadi sebelum sempat dihapus
+    if os.path.exists(LOCAL_MODEL_DIR):
+        shutil.rmtree(LOCAL_MODEL_DIR)
     exit(1)
     
 print("Script training CI selesai.")
