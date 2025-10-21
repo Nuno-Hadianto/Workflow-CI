@@ -1,6 +1,5 @@
 import pandas as pd
 import mlflow
-import mlflow.sklearn
 from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
@@ -8,7 +7,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import LabelEncoder
 import warnings
 import os
-import pickle
+import pickle 
 
 # Matikan warnings
 warnings.filterwarnings("ignore")
@@ -63,13 +62,18 @@ try:
         mlflow.log_metric("accuracy", accuracy)
         print(f"Akurasi: {accuracy}")
 
-        # Log model ke DagsHub
-        print("Melakukan logging model ke DagsHub...")
-        mlflow.sklearn.log_model(
-            sk_model=pipeline,
-            name="model" 
-        )
+        # --- LOG MODEL CARA MANUAL ---
+        print("Melakukan logging model ke DagsHub (Cara Manual)...")
+        model_filename = "model.pkl"
+        # Simpan model ke file .pkl
+        with open(model_filename, "wb") as f:
+            pickle.dump(pipeline, f)
+        # Log file .pkl sebagai artefak di folder 'model'
+        mlflow.log_artifact(model_filename, artifact_path="model")
         print("Logging model berhasil.")
+        # Hapus file lokal
+        os.remove(model_filename)
+        
 
         # 6. Simpan run_id ke file
         with open(RUN_ID_FILE, "w") as f:
