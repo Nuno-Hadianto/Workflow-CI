@@ -55,20 +55,24 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # 7. Build Docker Image 
+      # 7. Build Docker Image (Kriteria Advance)
       - name: Build Docker Image with MLflow
+        env:
+          MLFLOW_TRACKING_URI: ${{ secrets.DAGSHUB_URI }}
         run: |
           RUN_ID=${{ steps.read_run_id.outputs.RUN_ID }}
           echo "Membangun image dari Run ID: $RUN_ID"
+          
+          # Sekarang mlflow build-docker tahu harus mencari run di DagsHub
           mlflow models build-docker \
             -m "runs:/${RUN_ID}/model" \
             -n "${{ env.IMAGE_NAME }}:latest"
 
-      # 8. Push Docker Image 
+      # 8. Push Docker Image (Tetap sama)
       - name: Push Docker Image
         run: docker push ${{ env.IMAGE_NAME }}:latest
         
-      # 9. Upload Run ID Artifact
+      # 9. (Opsional) Upload Run ID Artifact 
       - name: Upload Run ID Artifact
         uses: actions/upload-artifact@v4
         with:
