@@ -1,0 +1,9 @@
+name: Netflix_ML_Workflow
+
+# Menentukan environment (Conda)
+conda_env: conda.yaml
+
+# Mendefinisikan 'entry point' atau perintah yang bisa dijalankan
+entry_points:
+  main:
+    command: "python modelling.py"
