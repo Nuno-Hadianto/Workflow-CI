@@ -41,7 +41,7 @@ jobs:
           export MLFLOW_TRACKING_USERNAME="nunohadianto"
           export MLFLOW_TRACKING_PASSWORD="afe2c28404bd7ea3ee6c8c7db28c922656b49bef" 
           
-          mlflow run MLProject(folder)/
+          mlflow run MLProject(folder)/ -e main
         
       # 5. Baca Run ID 
       - name: Read Run ID
